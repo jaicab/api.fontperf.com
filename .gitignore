@@ -6,7 +6,3 @@ phpunit.xml
 composer.json
 composer.lock
 script/deploy.sh
-
-.travis.yml
-
-script/deploy.sh

@@ -6,7 +6,7 @@ $app->get('/', function($req, $res){
 });
 
 $app->get('/v1/gfonts/{fontstring}', function($req, $res){
-	echo json_encode([ 'fontstring' => $req->getAttribute()['fontstring'] ]);
+	echo json_encode([ 'fontstring' => $req->getAttribute('fontstring') ]);
 
     return $res;
 });

@@ -21,5 +21,13 @@ git reset upstream/production
 touch .
 
 git add -A .
+git reset ".travis.yml"
+git reset ".gitignore"
+git reset "README.md"
+git reset "LICENSE"
+git reset "phpunit.xml"
+git reset "composer.json"
+git reset "composer.lock"
+git reset "script/deploy.sh"
 git commit -m "Launch ${rev} to production"
 git push -q upstream HEAD:production

@@ -11,7 +11,7 @@ fi
 rev=$(git rev-parse --short HEAD)
 
 git init
-git config user.name "Jaime Caballero"
+git config user.name "Travis CI"
 git config user.email "me@jaicab.com"
 
 git remote add upstream "https://$GH_TOKEN@github.com/jaicab/api.fontperf.com.git"

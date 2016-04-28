@@ -10,6 +10,17 @@ fi
 
 rev=$(git rev-parse --short HEAD)
 
+cat > .gitignore << LINES
+.travis.yml
+.gitignore
+README.md
+LICENSE
+phpunit.xml
+composer.json
+composer.lock
+script/deploy.sh
+LINES
+
 git init
 git config user.name "Travis CI"
 git config user.email "nobody@fontperf.com"
@@ -17,18 +28,6 @@ git config user.email "nobody@fontperf.com"
 git remote add upstream "https://${GITHUB_TOKEN}@github.com/jaicab/api.fontperf.com.git"
 git fetch upstream
 git reset upstream/production
-
-
-cat > .gitignore << LINES
-./.travis.yml
-./.gitignore
-./README.md
-./LICENSE
-./phpunit.xml
-./composer.json
-./composer.lock
-./script/deploy.sh
-LINES
 
 touch .
 

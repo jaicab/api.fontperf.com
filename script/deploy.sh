@@ -18,16 +18,20 @@ git remote add upstream "https://${GITHUB_TOKEN}@github.com/jaicab/api.fontperf.
 git fetch upstream
 git reset upstream/production
 
+
+cat > .gitignore << LINES
+./.travis.yml
+./.gitignore
+./README.md
+./LICENSE
+./phpunit.xml
+./composer.json
+./composer.lock
+./script/deploy.sh
+LINES
+
 touch .
 
 git add -A .
-git reset ".travis.yml"
-git reset ".gitignore"
-git reset "README.md"
-git reset "LICENSE"
-git reset "phpunit.xml"
-git reset "composer.json"
-git reset "composer.lock"
-git reset "script/deploy.sh"
 git commit -m "Launch ${rev} to production"
 git push -q upstream HEAD:production

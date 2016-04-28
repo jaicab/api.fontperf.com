@@ -14,7 +14,7 @@ git init
 git config user.name "Travis CI"
 git config user.email "nobody@fontperf.com"
 
-git remote add upstream "https://$GH_TOKEN@github.com/jaicab/api.fontperf.com.git"
+git remote add upstream "https://${GITHUB_TOKEN}@github.com/jaicab/api.fontperf.com.git"
 git fetch upstream
 git reset upstream/production
 

@@ -3,12 +3,13 @@ before_script:
   - composer self-update
   - composer install --prefer-source --no-interaction --dev
 php:
-- '5.5'
 - '5.6'
-- '7.0'
 - hhvm
 - nightly
 script: true
+env:
+  global:
+    secure: "Q//9aZQvlzPxGRyDt0WLXRAsplFQxIhwtoFHB5FMxQVtGsxM6ymkNX2Mx33QcRjNbQnPZPWF7imEsb6PWKWfUQucUW1NUgBWGpJIVsJtMF3gkTlkvytM1NdCKns0q8jUG20ql9D4K4pXZxHnv6WYvl7/2GlcD4i9kUaQItFco9Z6yGwIjSjLVmwDFwtJH6uUFQsFhwDEmsE4AOYeXziTDYH1bifXF3i4j3eNNioKJObzzoqrnDoA3Omi1L5u5pSUBUcZXInqCw+eQxq0ONZI0ysCX+8EXNlE0xZp1Ja0ZsEtt13xLTBVINdyRdZBsntRPMAAyKn6lxuKKyrytt4p/Klk5piusyd/WcPR+jIhM6rO2l/+JQFLkoQBKwueHWJdDOxSW397jX7SNaNFY0n/0lxeIvwalrqdBOpxgZ5KmHqFUNxeWUCqtQgzn32+06fDfV7f0bwglO9f3CIRO6mquBbW+FS1u0ZlngGlDACZjwrhQmudPgIdK72qzViLz71hG5Duv4JE8WZjDdV0iY3DBshkczlW/qXLM9amiomSeoTjyd3und3rpZRAdFDpJSIjUFkxBTQC9WPFC6RlwxAwUYIY54bD0d0BtmRcuP5LeXx/OSwUJjXfwPLXzCTA5EbzYjhCWz+TkiiDz+eSWFhYUSjxXltKS9zk2U66Q3YuJbQ="
 services:
 - mysql
 after_success:

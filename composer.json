@@ -2,7 +2,6 @@
     "require": {
         "catfan/Medoo": "^1.0",
         "slim/slim": "^3.0",
-        "sabberworm/php-css-parser": "*",
         "php-curl-class/php-curl-class": "^4.11"
     }
 }

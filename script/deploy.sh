@@ -12,13 +12,12 @@ rev=$(git rev-parse --short HEAD)
 
 cat > .gitignore << LINES
 .travis.yml
-.gitignore
 README.md
 LICENSE
-phpunit.xml
-composer.json
-composer.lock
-script/deploy.sh
+/phpunit.xml
+/composer.json
+/composer.lock
+/script/deploy.sh
 LINES
 
 git init

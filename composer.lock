@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "9fe6f9dbc502a195188e1bf3b7c5da43",
-    "content-hash": "5f18f80e20855fd131fa43a0f90db43c",
+    "hash": "734117785d53b1abaf325ef01a2db223",
+    "content-hash": "6953c8b711ec824f407162e5ca2ce975",
     "packages": [
         {
             "name": "catfan/medoo",
@@ -282,6 +282,47 @@
                 "response"
             ],
             "time": "2015-05-04 20:22:00"
+        },
+        {
+            "name": "sabberworm/php-css-parser",
+            "version": "7.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sabberworm/PHP-CSS-Parser.git",
+                "reference": "7642a0e1cabd81d95f91ebbea7d6de988c59edd3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sabberworm/PHP-CSS-Parser/zipball/7642a0e1cabd81d95f91ebbea7d6de988c59edd3",
+                "reference": "7642a0e1cabd81d95f91ebbea7d6de988c59edd3",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Sabberworm\\CSS": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Raphael Schweikert"
+                }
+            ],
+            "description": "Parser for CSS Files written in PHP",
+            "homepage": "http://www.sabberworm.com/blog/2010/6/10/php-css-parser",
+            "keywords": [
+                "css",
+                "parser",
+                "stylesheet"
+            ],
+            "time": "2016-04-26 20:16:57"
         },
         {
             "name": "slim/slim",

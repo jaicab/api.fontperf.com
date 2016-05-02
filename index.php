@@ -25,6 +25,12 @@ $app = new \Slim\App([
     ]
 ]);
 
+// Fix OPTIONS on CORS
+// return HTTP 200 for HTTP OPTIONS requests
+$app->options('/(:x+)', function($req, $res) {
+    return $res;
+});
+
 require 'v1/api.php';
 
 $app->run();

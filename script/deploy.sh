@@ -14,6 +14,7 @@ cat > .gitignore << LINES
 .travis.yml
 README.md
 LICENSE
+/tests/
 /phpunit.xml
 /composer.json
 /composer.lock

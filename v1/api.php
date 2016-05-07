@@ -36,19 +36,18 @@ $app->get('/v1/gfonts/download', function($req, $res){
 
 // Downloads a single font file on the specified format
 $app->get('/v1/gfonts/download/font', function($req, $res){
-	$error = [];
 
-	$fetchedCSS = fetchCombinedCss(urlencode($req->getQueryParams()['family']));
+  $myFonts = new GFont($req->getQueryParams()['family']);
 
-	if(!is_null($fetchedCSS['error'])) {
-		echo $fetchedCSS['error']['message'];
-		return $res->withStatus($fetchedCSS['error']['statusCode']);
-	}
+  if($myFonts->error) {
+    var_dump($myFonts->errorMessage);
+    die();
+  }
 
-	$font_list = processCSS($fetchedCSS['data']);
+  $myFonts->buildList();
 
 	// Only one file
-	if(sizeof($font_list)>1 || sizeof($font_list[0]->types)>1) {
+	if($myFonts->count > 1) {
 		$error[] = "This endpoint only downloads one file, but more than one has been passed";
 	}
 
@@ -93,7 +92,7 @@ $app->get('/v1/gfonts/download/css', function($req, $res){
     die();
   }
   $myFonts->buildList();
-  echo $myFonts->buildCss();
+  echo strval($myFonts);
 
 	return $res->withHeader('Content-type', 'text/css');
 });

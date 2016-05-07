@@ -25,6 +25,17 @@ $app = new \Slim\App([
     ]
 ]);
 
+// Register middleware
+$app->add(new \Slim\HttpCache\Cache('public', 86400));
+
+// Fetch DI Container
+$container = $app->getContainer();
+
+// Register service provider
+$container['cache'] = function () {
+    return new \Slim\HttpCache\CacheProvider();
+}
+
 // Fix OPTIONS on CORS
 // return HTTP 200 for HTTP OPTIONS requests
 $app->options('/(:x+)', function($req, $res) {

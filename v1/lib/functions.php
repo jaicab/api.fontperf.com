@@ -1,6 +1,5 @@
 <?php
 use \Curl\Curl;
-use Sabberworm\CSS\Parser as CSSParser;
 
 function processURL($oURL) {
 	$ret = [];

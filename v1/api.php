@@ -13,21 +13,25 @@ $app->get('/', function($req, $res){
 // Downloads a ZIP containing the fonts and the CSS file for self-hosting
 $app->get('/v1/gfonts/download', function($req, $res){
 
-	// Prepare File
-	$file = tempnam("tmp", "zip");
-	$zip = new ZipArchive();
-	$zip->open($file, ZipArchive::OVERWRITE);
+  $myFonts = new GFont($req->getQueryParams()['family']);
 
-	// Add CSS file
-	$zip->addFromString('file_name_within_archive.ext', $your_string_data);
-	// Add fonts
-	$zip->addFile('file_on_server.ext', 'second_file_name_within_archive.ext');
+  if($myFonts->error) {
+    var_dump($myFonts->errorMessage);
+    die();
+  }
 
-	// Close and send to users
-	$zip->close();
+  $myFonts->buildList();
+
+  $file = $myFonts->createZip();
+
+  if($myFonts->error) {
+    var_dump($myFonts->errorMessage);
+    die();
+  }
+
 	header('Content-Type: application/zip');
 	header('Content-Length: ' . filesize($file));
-	header('Content-Disposition: attachment; filename="file.zip"');
+	header('Content-Disposition: attachment; filename="gfonts-fontperf-'.time().'.zip"');
 	readfile($file);
 	unlink($file);
 });
@@ -35,7 +39,7 @@ $app->get('/v1/gfonts/download', function($req, $res){
 
 
 // Downloads a single font file on the specified format
-$app->get('/v1/gfonts/download/font', function($req, $res){
+$app->get('/v1/gfonts/download/font.{format}', function($req, $res){
 
   $myFonts = new GFont($req->getQueryParams()['family']);
 
@@ -46,7 +50,7 @@ $app->get('/v1/gfonts/download/font', function($req, $res){
 
   $myFonts->buildList();
 
-  $font = $myFonts->getFont($req->getQueryParams()['format']);
+  $font = $myFonts->getFont($req->getAttribute('format'));
 
   if($myFonts->error) {
     var_dump($myFonts->errorMessage);
@@ -73,7 +77,7 @@ $app->get('/v1/gfonts/download/font', function($req, $res){
 
 
 // CSS file for self-hosted setup
-$app->get('/v1/gfonts/download/css', function($req, $res){
+$app->get('/v1/gfonts/download/style[.{format}]', function($req, $res){
 
   $myFonts = new GFont($req->getQueryParams()['family']);
 
@@ -90,7 +94,7 @@ $app->get('/v1/gfonts/download/css', function($req, $res){
 
 
 // CSS file with data-URIs for fonts
-$app->get('/v1/gfonts/download/datauri', function($req, $res){
+$app->get('/v1/gfonts/download/datauri[.css]', function($req, $res){
 
   $myFonts = new GFont($req->getQueryParams()['family']);
 
@@ -108,7 +112,7 @@ $app->get('/v1/gfonts/download/datauri', function($req, $res){
 
 
 // Collects CSS for multiple requests to GF servers
-$app->get('/v1/gfonts/test', function($req, $res){
+$app->get('/v1/gfonts/test[.css]', function($req, $res){
 
 	$myFonts = new GFont($req->getQueryParams()['family']);
 
@@ -125,7 +129,7 @@ $app->get('/v1/gfonts/test', function($req, $res){
 
 
 // Breaks down what the API will have available
-$app->get('/v1/gfonts', function($req, $res){
+$app->get('/v1/gfonts[.json]', function($req, $res){
 
   $myFonts = new GFont($req->getQueryParams()['family']);
 

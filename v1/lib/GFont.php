@@ -13,7 +13,7 @@ use Sabberworm\CSS\Parser as CSSParser;
  */
 class GFont {
 
-  const BASEURL = 'https://fonts.googleapis.com/css?family=';
+  const BASEURL = 'https://fonts.googleapis.com/css';
 
   private $family; // Family query string
   private $css; // Combined fetched CSS
@@ -128,7 +128,7 @@ class GFont {
   public function dataURI($file, $format) {
     $contents=file_get_contents($file);
     $base64=base64_encode($contents);
-    return "data:".getMime($format).";base64,$base64";
+    return "data:".$this->getMime($format).";base64,$base64";
   }
 
 
@@ -172,13 +172,16 @@ class GFont {
    * @param $userAgent User agent string for different output
    * @return string CSS contents as a string
    */
-  private function fetchCSS($family, $userAgent = '') {
+  private function fetchCSS($family, $userAgent = '', $critical = null) {
     $ret = '';
+    $query = [
+      "family" => urldecode($family)
+    ];
 
-    $url = self::BASEURL . $family;
     $curl = new Curl();
     $curl->setUserAgent($userAgent);
-    $curl->get($url);
+    $curl->get(self::BASEURL, $query);
+
 
     if ($curl->error) {
       $this->setError($curl->errorMessage, $curl->errorCode);
@@ -242,7 +245,6 @@ class GFont {
   }
 
 
-
   /**
    * Gives the necessary information for a font download
    *
@@ -274,6 +276,40 @@ class GFont {
     $ret['filename'] = $this->nameFont($font->id) . "." . $format;
 
     return $ret;
+  }
+
+
+
+  /**
+   * Creates the ZIP with all the fonts and the CSS for them
+   *
+   * @access public
+   */
+  public function createZip() {
+    // Prepare File
+    $file = tempnam("tmp", "zip");
+    $zip = new ZipArchive();
+    $zip->open($file, ZipArchive::OVERWRITE);
+
+    // Add CSS file
+    $zip->addFromString('fonts.css', $this->buildCSS());
+
+    // Create directory structure
+    //$zip->
+
+    // Add fonts
+    foreach($this->font_list as $family) {
+      foreach($family->types as $font) {
+        foreach($font->files as $format => $url) {
+          $zip->addFromString(("fonts/".$format."/". $this->nameFont($font->id) . "." . $format), file_get_contents($url));
+        }
+      }
+    }
+
+    // Close and send to users
+    $zip->close();
+
+    return $file;
   }
 
 
@@ -442,7 +478,9 @@ class GFont {
         } else {
 
           // EOT IE9 compat mode
-          $string = new Sabberworm\CSS\Value\CSSString($version->files->eot);
+          $format = 'eot';
+
+          $string = new Sabberworm\CSS\Value\CSSString('./font/'.$format.'/'.$this->nameFont($version->id).".".$format);
           $url = new Sabberworm\CSS\Value\URL($string);
           $src->setValue($url);
           $oFontFace->addRule($src);
@@ -453,8 +491,9 @@ class GFont {
 
           $format_list = ['woff2', 'woff', 'ttf'];
 
+
           // Add EOT for IE 6-8
-          $oString = new Sabberworm\CSS\Value\CSSString($version->files->eot . "?#iefix");
+          $oString = new Sabberworm\CSS\Value\CSSString('./font/'.$format.'/'.$this->nameFont($version->id).".".$format . "?#iefix");
           $oUrl = new Sabberworm\CSS\Value\URL($oString);
 
           $oFormat = new Sabberworm\CSS\Value\CSSFunction("format", $this->fontfaceFormat("eot"));
@@ -469,7 +508,7 @@ class GFont {
 
           // Modern browsers
           foreach($format_list as $format) {
-            $oString = new Sabberworm\CSS\Value\CSSString($version->files->$format);
+            $oString = new Sabberworm\CSS\Value\CSSString('./font/'.$format.'/'.$this->nameFont($version->id).".".$format);
             $oUrl = new Sabberworm\CSS\Value\URL($oString);
 
             $oFormat = new Sabberworm\CSS\Value\CSSFunction("format", $this->fontfaceFormat($format));
@@ -495,7 +534,8 @@ class GFont {
     //header("Content-Length: " . filesize($file));
 
     $oFormat = Sabberworm\CSS\OutputFormat::createPretty();
-    return $oCss->render($oFormat);
+    $css = $oCss->render($oFormat);
+    return "/*!\n * fontperf API (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n */\n".$css;
   }
 
 

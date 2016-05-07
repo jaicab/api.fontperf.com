@@ -225,6 +225,23 @@ class GFont {
   }
 
 
+  /**
+   * Builds a filename for a Google-Fonts-like font string
+   *
+   * @access public
+   * @param string $id Google-Fonts-like string (e.g. Open+Sans:400italic)
+   */
+  private function nameFont($id) {
+    $ret = $id;
+    // Change : into -
+    $ret = str_replace(':', '-', $ret);
+    // Remove +
+    $ret = str_replace('+', '', $ret);
+
+    return $ret;
+  }
+
+
 
   /**
    * Gives the necessary information for a font download
@@ -242,17 +259,19 @@ class GFont {
     }
 
     // Get the files for the font
-    $font = $font_list[0]->types[0];
+    $font = $this->font_list[0]->types[0];
 
     // Make sure we got the format
     if(!is_string($format) || !isset($font->files->$format)) {
+      var_dump($font->files);
+      die();
       $this->setError("The requested format is not available or it hasn't been specified");
       return;
     }
 
     $ret['file'] = $font->files->$format;
     $ret['mime'] = $this->getMime($format);
-    $ret['format'] = trim($font->id, '+') . "." . $format;
+    $ret['filename'] = $this->nameFont($font->id) . "." . $format;
 
     return $ret;
   }

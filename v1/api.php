@@ -3,9 +3,10 @@
 require "lib/functions.php";
 require "lib/GFont.php";
 
+
 // Generic
 $app->get('/', function($req, $res){
-    return $res->withStatus(301)->withHeader('Location', 'https://fontperf.com/docs/');
+  return $res->withStatus(301)->withHeader('Location', 'https://fontperf.com/docs/');
 });
 
 
@@ -110,7 +111,6 @@ $app->get('/v1/gfonts/download/datauri[.css]', function($req, $res){
 
 
 
-
 // Collects CSS for multiple requests to GF servers
 $app->get('/v1/gfonts/test[.css]', function($req, $res){
 
@@ -139,8 +139,7 @@ $app->get('/v1/gfonts[.json]', function($req, $res){
   }
   $myFonts->buildList();
 
-	echo json_encode($myFonts->getList(), JSON_PRETTY_PRINT);
+	echo json_encode($myFonts->getList());
     return $res->withHeader('Content-type', 'application/json');
 });
-
 

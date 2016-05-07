@@ -225,6 +225,39 @@ class GFont {
   }
 
 
+
+  /**
+   * Gives the necessary information for a font download
+   *
+   * @access public
+   * @param string $format File extension requested
+   */
+  public function getFont($format) {
+    $ret = [];
+
+    // Make sure we are only requesting one font
+    if($this->count > 1) {
+      $this->setError("This endpoint only downloads one file, but more than one has been passed");
+      return;
+    }
+
+    // Get the files for the font
+    $font = $font_list[0]->types[0];
+
+    // Make sure we got the format
+    if(!is_string($format) || !isset($font->files->$format)) {
+      $this->setError("The requested format is not available or it hasn't been specified");
+      return;
+    }
+
+    $ret['file'] = $font->files->$format;
+    $ret['mime'] = $this->getMime($format);
+    $ret['format'] = trim($font->id, '+') . "." . $format;
+
+    return $ret;
+  }
+
+
   /**
    * Builds an clean object that contains all the families, styles, and files in different formats.
    *
@@ -389,6 +422,7 @@ class GFont {
 
         } else {
 
+          // EOT IE9 compat mode
           $string = new Sabberworm\CSS\Value\CSSString($version->files->eot);
           $url = new Sabberworm\CSS\Value\URL($string);
           $src->setValue($url);
@@ -400,6 +434,21 @@ class GFont {
 
           $format_list = ['woff2', 'woff', 'ttf'];
 
+          // Add EOT for IE 6-8
+          $oString = new Sabberworm\CSS\Value\CSSString($version->files->eot . "?#iefix");
+          $oUrl = new Sabberworm\CSS\Value\URL($oString);
+
+          $oFormat = new Sabberworm\CSS\Value\CSSFunction("format", $this->fontfaceFormat("eot"));
+
+          $oUrlWithFormat = new Sabberworm\CSS\Value\RuleValueList(' ');
+          $oUrlWithFormat->setListComponents([
+            $oUrl,
+            $oFormat
+          ]);
+
+          $src_value->addListComponent($oUrlWithFormat);
+
+          // Modern browsers
           foreach($format_list as $format) {
             $oString = new Sabberworm\CSS\Value\CSSString($version->files->$format);
             $oUrl = new Sabberworm\CSS\Value\URL($oString);

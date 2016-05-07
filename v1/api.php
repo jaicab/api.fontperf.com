@@ -46,36 +46,26 @@ $app->get('/v1/gfonts/download/font', function($req, $res){
 
   $myFonts->buildList();
 
-	// Only one file
-	if($myFonts->count > 1) {
-		$error[] = "This endpoint only downloads one file, but more than one has been passed";
-	}
+  $font = $myFonts->getFont($req->getQueryParams()['format']);
 
-	// Get the formats we got
-	// Format asked is in there
-	$format = $req->getQueryParams()['format'];
-	if(!isset($req->getQueryParams()['format']) || !isset($font_list[0]->types[0]->files->$format)) {
-		$error[] = "The requested format is not available or it hasn't been specified";
-	}
-
-	if(!empty($error)) {
-		echo json_encode([
-			"stat" => "error",
-			"error" => $error
-		]);
-		return $res->withStatus(500);
-	}
-
-	// Grab the file
-	$file = $font_list[0]->types[0]->files->$format;
-	$filename = trim($font_list[0]->types[0]->id, '+') . "." . $format;
+  if($myFonts->error) {
+    var_dump($myFonts->errorMessage);
+    die();
+  }
 
 	// Set download
-	header('Content-Disposition: attachment; filename="'.$filename.'"');
-	header("Content-Type: font/".$format);
-	header("Content-Length: " . filesize($file));
+	header('Content-Disposition: attachment; filename="'.$font['filename'].'"');
+	header("Content-Type: ".$font['mime']);
+	header("Content-Length: " . filesize($font['file']));
 
-	echo file_get_contents($file);
+	$contents = file_get_contents($font['file']);
+
+  if(!$contents) {
+    var_dump("File could not be reached");
+    die();
+  }
+
+  echo $contents;
 
 	return $res;
 });

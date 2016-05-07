@@ -6,4 +6,4 @@ See [the documentation](https://fontperf.com/docs/).
 - **No authentication** is required to access the API.
 - If you are going to be regularly using the API, I recommend caching data on your service.
 
-Licensed under [MIT license](/license).
+Licensed under [MIT license](/LICENSE).

@@ -57,6 +57,82 @@ class GFont {
 
 
   /**
+   * Lists the font files, styles and families
+   *
+   * @access public
+   * @return object Font list breakdown
+   */
+  public function getList() {
+    return $this->font_list;
+  }
+
+
+  /**
+   * Combined CSS for all the different formats
+   *
+   * @access public
+   * @return string Contents of all the requested CSS in a string
+   */
+  public function getCss() {
+    return $this->css;
+  }
+
+
+  /**
+   * Parses class contents as string (CSS form)
+   *
+   * @access public
+   * @return string Contents of all the requested CSS in a string
+   */
+  public function __toString() {
+    return $this->buildCSS();
+  }
+
+
+  /**
+   * Gives MIME type for a format given
+   *
+   * @access public
+   * @param string $format File extension
+   * @return string MIME type
+   */
+  public function getMime($format) {
+    $mime = 'font/woff2';
+    if($format!== 'woff2') {
+      switch($format) {
+        case 'woff':
+          $mime = 'application/font-woff';
+          break;
+        case 'eot':
+          $mime = 'application/vnd.ms-fontobject';
+          break;
+        case 'ttf':
+          $mime = 'application/font-sfnt';
+          break;
+        default:
+          $mime = 'font/'.$format;
+      }
+    }
+    return $mime;
+  }
+
+
+  /**
+   * Encodes file on base64 and creates dataURI
+   *
+   * @access public
+   * @param string $file File path
+   * @param string $format File extension
+   * @return string DataURI for the file given
+   */
+  public function dataURI($file, $format) {
+    $contents=file_get_contents($file);
+    $base64=base64_encode($contents);
+    return "data:".getMime($format).";base64,$base64";
+  }
+
+
+  /**
    * Breaks down family into styles for separate requests
    *
    * @access private
@@ -87,6 +163,7 @@ class GFont {
     $this->count = count($ret);
   }
 
+
   /**
    * Fetches the CSS for a given family string
    *
@@ -98,7 +175,7 @@ class GFont {
   private function fetchCSS($family, $userAgent = '') {
     $ret = '';
 
-    $url = strval(self::BASEURL.$family);
+    $url = self::BASEURL . $family;
     $curl = new Curl();
     $curl->setUserAgent($userAgent);
     $curl->get($url);
@@ -146,6 +223,7 @@ class GFont {
 
     $this->css = $ret;
   }
+
 
   /**
    * Builds an clean object that contains all the families, styles, and files in different formats.
@@ -243,6 +321,32 @@ class GFont {
     return;
   }
 
+
+  /**
+   * Gives value for format() on @font-face syntax
+   *
+   * @access public
+   * @param string $format File extension
+   * @return string Appropiate value for format()
+   */
+  public function fontfaceFormat($format) {
+    $ret = $format;
+
+    switch($format) {
+      case 'ttf':
+        $ret = "truetype";
+        break;
+      case 'eot':
+        $ret = "embedded-opentype";
+        break;
+      default:
+        $ret = $format;
+    }
+
+    return '"'. $ret . '"';
+  }
+
+
   /**
    * Takes the contents of the font list and builds a CSS using the given pattern
    *
@@ -278,7 +382,7 @@ class GFont {
 
         if($type == "datauri") {
 
-          $string = new Sabberworm\CSS\Value\CSSString(datauri($version->files->woff2, "woff2"));
+          $string = new Sabberworm\CSS\Value\CSSString($this->datauri($version->files->woff2, "woff2"));
           $url = new Sabberworm\CSS\Value\URL($string);
           $src->setValue($url);
           $oFontFace->addRule($src);
@@ -300,7 +404,7 @@ class GFont {
             $oString = new Sabberworm\CSS\Value\CSSString($version->files->$format);
             $oUrl = new Sabberworm\CSS\Value\URL($oString);
 
-            $oFormat = new Sabberworm\CSS\Value\CSSFunction("format", fontfaceFormat($format));
+            $oFormat = new Sabberworm\CSS\Value\CSSFunction("format", $this->fontfaceFormat($format));
 
             $oUrlWithFormat = new Sabberworm\CSS\Value\RuleValueList(' ');
             $oUrlWithFormat->setListComponents([
@@ -326,27 +430,6 @@ class GFont {
     return $oCss->render($oFormat);
   }
 
-
-  /**
-   * Lists the font files, styles and families
-   *
-   * @access public
-   * @return object Font list breakdown
-   */
-  public function getList() {
-    return $this->font_list;
-  }
-
-
-  /**
-   * Combined CSS for all the different formats
-   *
-   * @access public
-   * @return string Contents of all the requested CSS in a string
-   */
-  public function getCss() {
-    return $this->css;
-  }
 
 
 }

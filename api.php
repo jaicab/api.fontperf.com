@@ -85,15 +85,18 @@ $app->get('/v1/gfonts/download/font', function($req, $res){
 
 // CSS file for self-hosted setup
 $app->get('/v1/gfonts/download/css', function($req, $res){
+	$error = [];
 
-  $myFonts = new GFont($req->getQueryParams()['family']);
+	$fetchedCSS = fetchCombinedCss(urlencode($req->getQueryParams()['family']));
 
-  if($myFonts->error) {
-    var_dump($myFonts->errorMessage);
-    die();
-  }
-  $myFonts->buildList();
-  echo $myFonts->buildCss();
+	if(!is_null($fetchedCSS['error'])) {
+		echo $fetchedCSS['error']['message'];
+		return $res->withStatus($fetchedCSS['error']['statusCode']);
+	}
+
+	$font_list = processCSS($fetchedCSS['data']);
+
+	echo buildCSS($font_list);
 
 	return $res->withHeader('Content-type', 'text/css');
 });
@@ -102,15 +105,18 @@ $app->get('/v1/gfonts/download/css', function($req, $res){
 
 // CSS file with data-URIs for fonts
 $app->get('/v1/gfonts/download/datauri', function($req, $res){
+	$error = [];
 
-  $myFonts = new GFont($req->getQueryParams()['family']);
+	$fetchedCSS = fetchCombinedCss(urlencode($req->getQueryParams()['family']));
 
-  if($myFonts->error) {
-    var_dump($myFonts->errorMessage);
-    die();
-  }
-  $myFonts->buildList();
-  echo $myFonts->buildCss('datauri');
+	if(!is_null($fetchedCSS['error'])) {
+		echo $fetchedCSS['error']['message'];
+		return $res->withStatus($fetchedCSS['error']['statusCode']);
+	}
+
+	$font_list = processCSS($fetchedCSS['data']);
+
+	echo buildCSS($font_list, 'datauri');
 
 	return $res->withHeader('Content-type', 'text/css');
 });
@@ -121,15 +127,16 @@ $app->get('/v1/gfonts/download/datauri', function($req, $res){
 // Collects CSS for multiple requests to GF servers
 $app->get('/v1/gfonts/test', function($req, $res){
 
-	$myFonts = new GFont($req->getQueryParams()['family']);
+	$fetchedCSS = fetchCombinedCss(urlencode($req->getQueryParams()['family']));
 
-  if($myFonts->error) {
-    var_dump($myFonts->errorMessage);
-    die();
-  }
-  $myFonts->buildList();
-  echo $myFonts->getCss();
+	if(!is_null($fetchedCSS['error'])) {
+		echo $fetchedCSS['error']['message'];
+		return $res->withStatus($fetchedCSS['error']['statusCode']);
+	}
 
+	$oCss = new Sabberworm\CSS\Parser($fetchedCSS['data']);
+
+	var_dump($oCss->parse());
 	return $res->withHeader('Content-type', 'text/css');
 });
 

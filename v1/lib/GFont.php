@@ -14,11 +14,13 @@ use Sabberworm\CSS\Parser as CSSParser;
 class GFont {
 
   const BASEURL = 'https://fonts.googleapis.com/css';
+  const SUPPORTED_FORMATS = ['woff2', 'woff', 'ttf', 'eot'];
   const USER_AGENTS = [
     "woff2" => "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML like Gecko) Chrome/38.0.2125.104 Safari/537.36",
     "woff" => "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko",
     "ttf" => "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/534.54.16 (KHTML, like Gecko) Version/5.1.4 Safari/534.54.16",
-    "eot" => "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)"
+    "eot" => "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)",
+    "svg" => "Mozilla/4.0 (iPad; CPU OS 4_0_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/4.1 Mobile/9A405 Safari/7534.48.3"
   ];
 
   private $family; // Family query string
@@ -106,24 +108,69 @@ class GFont {
    * @return string MIME type
    */
   public function getMime($format) {
-    $mime = 'font/woff2';
-    if($format!== 'woff2') {
-      switch($format) {
-        case 'woff':
-          $mime = 'application/font-woff';
-          break;
-        case 'eot':
-          $mime = 'application/vnd.ms-fontobject';
-          break;
-        case 'ttf':
-          $mime = 'application/font-sfnt';
-          break;
-        default:
-          $mime = 'font/'.$format;
-      }
+    switch($format) {
+      case 'woff':
+        $mime = 'application/font-woff';
+        break;
+      case 'eot':
+        $mime = 'application/vnd.ms-fontobject';
+        break;
+      case 'ttf':
+        $mime = 'application/font-sfnt';
+        break;
+      case 'svg':
+        $mime = 'font/svg+xml';
+        break;
+      default:
+        $mime = 'font/'.$format;
     }
     return $mime;
   }
+
+
+
+  /**
+   * Builds a filename for a Google-Fonts-like font string
+   *
+   * @access public
+   * @param string $id Google-Fonts-like string (e.g. Open+Sans:400italic)
+   */
+  private function nameFont($id) {
+    $ret = $id;
+    // Change : into -
+    $ret = str_replace(':', '-', $ret);
+    // Remove +
+    $ret = str_replace('+', '', $ret);
+
+    return $ret;
+  }
+
+
+
+  /**
+   * Gives value for format() on @font-face syntax
+   *
+   * @access public
+   * @param string $format File extension
+   * @return string Appropiate value for format()
+   */
+  public function fontfaceFormat($format) {
+    $ret = $format;
+
+    switch($format) {
+      case 'ttf':
+        $ret = "truetype";
+        break;
+      case 'eot':
+        $ret = "embedded-opentype";
+        break;
+      default:
+        $ret = $format;
+    }
+
+    return '"'. $ret . '"';
+  }
+
 
 
   /**
@@ -139,6 +186,7 @@ class GFont {
     $base64=base64_encode($contents);
     return "data:".$this->getMime($format).";base64,$base64";
   }
+
 
 
   /**
@@ -171,6 +219,7 @@ class GFont {
     $this->family_breakdown = $ret;
     $this->count_requested = count($ret);
   }
+
 
 
   /**
@@ -219,6 +268,7 @@ class GFont {
   }
 
 
+
   /**
    * Fetches all the necessary CSS to get all the formats we want
    *
@@ -234,39 +284,26 @@ class GFont {
       $critical = $this->critical_subset;
     }
 
-    $formats = ['woff2', 'woff', 'ttf'];
+    $formats = array_diff(self::SUPPORTED_FORMATS, ['eot']);
 
-    // Modern browsers - Every format but EOT
+    // Modern browsers - Every format but EOT and SVG
     foreach($formats as $format) {
       $fetchedCSS = $this->singleFetchCSS($this->family, self::USER_AGENTS[$format], $critical);
       $ret .= $fetchedCSS;
     }
 
-    // IEs - EOT needs one request per style and weight
-    foreach($this->family_breakdown as $font) {
-      $fetchedCSS = $this->singleFetchCSS($font, self::USER_AGENTS['eot'], $critical);
-      $ret .= $fetchedCSS;
+    // EOT and SVG need one request per style and weight
+    $formats = ['eot', 'svg'];
+    foreach($formats as $format) {
+      foreach($this->family_breakdown as $font) {
+        $fetchedCSS = $this->singleFetchCSS($font, self::USER_AGENTS[$format], $critical);
+        $ret .= $fetchedCSS;
+      }
     }
 
     $this->css = $ret;
   }
 
-
-  /**
-   * Builds a filename for a Google-Fonts-like font string
-   *
-   * @access public
-   * @param string $id Google-Fonts-like string (e.g. Open+Sans:400italic)
-   */
-  private function nameFont($id) {
-    $ret = $id;
-    // Change : into -
-    $ret = str_replace(':', '-', $ret);
-    // Remove +
-    $ret = str_replace('+', '', $ret);
-
-    return $ret;
-  }
 
 
   /**
@@ -307,17 +344,18 @@ class GFont {
    *
    * @access public
    */
-  public function createZip() {
+  public function createZip($critical = null) {
     // Prepare File
     $file = tempnam("tmp", "zip");
     $zip = new ZipArchive();
     $zip->open($file, ZipArchive::OVERWRITE);
 
     // Add CSS file
-    $css = "/*!\n * fontperf API (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n */\n";
+    $css = cssComment(false, ['Change this package at https://google.fontperf.com/package?family='.$this->family]);
     $css .= $this->buildCSS();
     $zip->addFromString('fonts.css', $css);
 
+    $format_list = self::SUPPORTED_FORMATS;
 
     // Add fonts
     foreach($this->font_list as $family) {
@@ -326,9 +364,28 @@ class GFont {
 
       foreach($family->types as $font) {
         foreach($font->files as $format => $url) {
-          $zip->addFromString(("font/".$dir. $this->nameFont($font->id) . "." . $format), file_get_contents($url));
+          if(in_array($format, $format_list)) $zip->addFromString(("font/".$dir. $this->nameFont($font->id) . "." . $format), file_get_contents($url));
         }
       }
+    }
+
+    // Add critical fonts
+    if($critical && isset($critical['family'])) {
+      $set = 'Aa';
+      if(isset($critical['set'])) $set = $critical['set'];
+      $myCriticalFonts = new GFont($critical['family'], $set);
+
+      $myCriticalFonts->buildList();
+
+      $css = $myCriticalFonts->buildCss('datauri', 'woff2');
+
+      if($myCriticalFonts->error) {
+        $myFonts->setError($myCriticalFonts->errorMessage);
+      } else {
+        $css = cssComment(false, ["Encoded fonts are in 'woff2' format."]) . $css;
+        $zip->addFromString('critical_fonts.css', $css);
+      }
+
     }
 
     // Close and send to users
@@ -336,6 +393,7 @@ class GFont {
 
     return $file;
   }
+
 
 
   /**
@@ -442,30 +500,6 @@ class GFont {
   }
 
 
-  /**
-   * Gives value for format() on @font-face syntax
-   *
-   * @access public
-   * @param string $format File extension
-   * @return string Appropiate value for format()
-   */
-  public function fontfaceFormat($format) {
-    $ret = $format;
-
-    switch($format) {
-      case 'ttf':
-        $ret = "truetype";
-        break;
-      case 'eot':
-        $ret = "embedded-opentype";
-        break;
-      default:
-        $ret = $format;
-    }
-
-    return '"'. $ret . '"';
-  }
-
 
   /**
    * Takes the contents of the font list and builds a CSS using the given pattern
@@ -530,7 +564,6 @@ class GFont {
           $src_multiple = new Sabberworm\CSS\Rule\Rule("src");
           $src_value = new Sabberworm\CSS\Value\RuleValueList();
 
-          $format_list = ['woff2', 'woff', 'ttf'];
 
           // Add EOT for IE 6-8
           $oString = new Sabberworm\CSS\Value\CSSString('./font/' . $dir . $this->nameFont($version->id).".".$format . "?#iefix");
@@ -547,8 +580,12 @@ class GFont {
           $src_value->addListComponent($oUrlWithFormat);
 
           // Modern browsers
+          $format_list = array_diff(self::SUPPORTED_FORMATS, ['eot']);
+
           foreach($format_list as $format) {
-            $oString = new Sabberworm\CSS\Value\CSSString('./font/' . $dir . $this->nameFont($version->id).".".$format);
+            $path = './font/' . $dir . $this->nameFont($version->id).".".$format;
+            if($format == 'svg') $path .= '#'.str_replace(' ', '', $family->family);
+            $oString = new Sabberworm\CSS\Value\CSSString($path);
             $oUrl = new Sabberworm\CSS\Value\URL($oString);
 
             $oFormat = new Sabberworm\CSS\Value\CSSFunction("format", $this->fontfaceFormat($format));

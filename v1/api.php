@@ -23,7 +23,20 @@ $app->get('/v1/gfonts/download', function($req, $res){
 
   $myFonts->buildList();
 
-  $file = $myFonts->createZip();
+  if(!isset($req->getQueryParams()['critical'])) {
+    $file = $myFonts->createZip();
+  } else {
+    if(!isset($req->getQueryParams()['critical_set'])) {
+      $file = $myFonts->createZip([
+        'family' => $req->getQueryParams()['critical'],
+        'set' => $req->getQueryParams()['critical_set']
+      ]);
+    } else {
+      $file = $myFonts->createZip([
+        'family' => $req->getQueryParams()['critical']
+      ]);
+    }
+  }
 
   if($myFonts->error) {
     var_dump($myFonts->errorMessage);

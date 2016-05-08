@@ -18,7 +18,9 @@ function processURL($oURL) {
      $ret['ext'] = substr($mime, $slash_pos + 1);
   }
 
-  $valid_extensions = ['woff2', 'woff', 'ttf', 'eot'];
+  if($ret['ext'] == 'svg+xml') $ret['ext'] = 'svg';
+
+  $valid_extensions = ['woff2', 'woff', 'ttf', 'eot', 'svg'];
 
   if(!in_array($ret['ext'], $valid_extensions)) {
     $ret['ext'] = 'unknown';

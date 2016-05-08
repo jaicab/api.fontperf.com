@@ -4,7 +4,8 @@ use \Curl\Curl;
 function processURL($oURL) {
 	$ret = [];
 	$ret['file'] = trim(strval($oURL->getURL()), '"');
-	$ret['ext'] = pathinfo($ret['file'], PATHINFO_EXTENSION);
+	$ext = pathinfo($ret['file'], PATHINFO_EXTENSION);
+  $ret['ext'] = empty($ext) ? "woff2" : $ext;
 
 	return $ret;
 }

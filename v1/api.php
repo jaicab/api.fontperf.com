@@ -88,7 +88,7 @@ $app->get('/v1/gfonts/download/style[.{format}]', function($req, $res){
   }
   $myFonts->buildList();
 
-  echo "/*!\n * fontperf API (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
+  echo "/*!\n * fontperf API v1.0 (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
   echo " * \n * The fonts linked here are available as a ZIP package on /download and as separate files on /download/font.format.\n";
   echo "*/\n";
   echo strval($myFonts);
@@ -109,7 +109,7 @@ $app->get('/v1/gfonts/datauri[.css]', function($req, $res){
   }
   $myFonts->buildList();
 
-  echo "/*!\n * fontperf API (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
+  echo "/*!\n * fontperf API v1.0 (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
   echo " * \n * DISCLAIMER: DO NOT LINK THIS CSS DIRECTLY. THIS API IS NOT MEANT FOR HOSTING AND ANY UPDATE COULD AFFECT YOUR CODEBASE\n";
   echo "*/\n";
   echo $myFonts->buildCss('datauri');
@@ -131,7 +131,7 @@ $app->get('/v1/gfonts/critical[.css]', function($req, $res){
   }
   $myFonts->buildList();
 
-  echo "/*!\n * fontperf API (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
+  echo "/*!\n * fontperf API v1.0 (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
   echo " * \n * DISCLAIMER: DO NOT LINK THIS CSS DIRECTLY. THIS API IS NOT MEANT FOR HOSTING AND ANY UPDATE COULD AFFECT YOUR CODEBASE\n";
   echo "*/\n";
   echo $myFonts->buildCss('datauri');
@@ -152,7 +152,7 @@ $app->get('/v1/gfonts/test[.css]', function($req, $res){
   }
   $myFonts->buildList();
 
-  echo "/*!\n * fontperf API (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
+  echo "/*!\n * fontperf API v1.0 (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
   echo " * \n * DISCLAIMER: DO NOT LINK THIS CSS DIRECTLY. THIS API IS NOT MEANT FOR HOSTING AND ANY UPDATE COULD AFFECT YOUR CODEBASE\n";
   echo "*/\n";
   echo $myFonts->getCss();

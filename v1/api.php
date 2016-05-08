@@ -120,7 +120,7 @@ $app->get('/v1/gfonts/datauri[.css]', function($req, $res){
     die();
   }
 
-  echo cssComment(true);
+  echo cssComment(true, ["Encoded fonts are in '".$format."' format."]);
   echo $css;
 
 	return $res->withHeader('Content-type', 'text/css');

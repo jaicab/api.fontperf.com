@@ -24,7 +24,9 @@ class GFont {
   public $errorMessage = null;
   public $errorStatus = null;
 
+  public $count_requested = 0;
   public $count = 0;
+
 
 
   /**
@@ -33,11 +35,12 @@ class GFont {
    * @access public
    * @param  string $family Value of the query string with the same name provided by Google Fonts
    */
-  function __construct($family) {
+  function __construct($family, $critical_subset = null) {
     $this->family = urlencode($family);
     $this->font_list = [];
+    $this->critical_subset = $critical_subset;
 
-    $this->fetchCombinedCSS();
+    $this->fetchCSS();
   }
 
 
@@ -160,7 +163,7 @@ class GFont {
     }
 
     $this->family_breakdown = $ret;
-    $this->count = count($ret);
+    $this->count_requested = count($ret);
   }
 
 
@@ -172,11 +175,26 @@ class GFont {
    * @param $userAgent User agent string for different output
    * @return string CSS contents as a string
    */
-  private function fetchCSS($family, $userAgent = '', $critical = null) {
+  private function singleFetchCSS($family, $userAgent = '', $critical_subset = null) {
     $ret = '';
+
     $query = [
       "family" => urldecode($family)
     ];
+
+    // Critical font
+    // TODO move this to a better place
+    if($critical_subset) {
+
+      $critical = '';
+
+      if(strpos($critical_subset, 'a') !== FALSE) $critical .= 'abcdefghijklmnopqrstuvwxyz';
+      if(strpos($critical_subset, 'A') !== FALSE) $critical .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      if(strpos($critical_subset, '1') !== FALSE) $critical .= '0123456789';
+
+      if(!empty($critical)) $query['text'] = $critical;
+      // TODO else error
+    }
 
     $curl = new Curl();
     $curl->setUserAgent($userAgent);
@@ -200,8 +218,9 @@ class GFont {
    *
    * @access private
    */
-  private function fetchCombinedCSS() {
+  private function fetchCSS() {
     $ret = '';
+    $this->breakDownFamily();
 
     $userAgentList = [
       "woff2" => "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML like Gecko) Chrome/38.0.2125.104 Safari/537.36",
@@ -209,18 +228,24 @@ class GFont {
       "ttf" => "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/534.54.16 (KHTML, like Gecko) Version/5.1.4 Safari/534.54.16"
     ];
 
-    // Every format but EOT
+    // If this is critical
+    if($this->critical_subset) {
+      $ua = $userAgentList['woff2'];
+      $this->css = $this->singleFetchCSS($this->family, $ua, $this->critical_subset);
+      return;
+    }
+
+    // Modern browsers - Every format but EOT
     foreach($userAgentList as $type => $ua) {
-      $fetchedCSS = $this->fetchCSS($this->family, $ua);
+      $fetchedCSS = $this->singleFetchCSS($this->family, $ua);
       $ret .= $fetchedCSS;
     }
 
-    // EOT needs one request per style and weight
+    // IEs - EOT needs one request per style and weight
     $ua = "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)";
-    $this->breakDownFamily();
 
     foreach($this->family_breakdown as $font) {
-      $fetchedCSS = $this->fetchCSS($font, $ua);
+      $fetchedCSS = $this->singleFetchCSS($font, $ua);
       $ret .= $fetchedCSS;
     }
 
@@ -292,16 +317,19 @@ class GFont {
     $zip->open($file, ZipArchive::OVERWRITE);
 
     // Add CSS file
-    $zip->addFromString('fonts.css', $this->buildCSS());
+    $css = "/*!\n * fontperf API (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n */\n";
+    $css .= $this->buildCSS();
+    $zip->addFromString('fonts.css', $css);
 
-    // Create directory structure
-    //$zip->
 
     // Add fonts
     foreach($this->font_list as $family) {
+      // Directory option
+      $dir = str_replace(' ', '', $family->family)."/";
+
       foreach($family->types as $font) {
         foreach($font->files as $format => $url) {
-          $zip->addFromString(("fonts/".$format."/". $this->nameFont($font->id) . "." . $format), file_get_contents($url));
+          $zip->addFromString(("font/".$dir. $this->nameFont($font->id) . "." . $format), file_get_contents($url));
         }
       }
     }
@@ -319,6 +347,7 @@ class GFont {
    * @access public
    */
   public function buildList() {
+
     $font_list = [];
     $oParser = new CSSParser($this->css);
 
@@ -359,6 +388,9 @@ class GFont {
         $font_list[$name] = [];
         $font_list[$name]['family'] = $name;
         $font_list[$name]['types'] = [];
+
+        if($this->critical_subset)
+          $font_list[$name]['family'] .= " Critical";
       }
 
       // Add font variation
@@ -401,6 +433,9 @@ class GFont {
 
     // Make list of styles an unordered array
     foreach($font_list as $key => $family) {
+      // Real count
+      $this->count += count($font_list[$key]['types']);
+
       $font_list[$key]['types'] = array_values($family['types']);
       $font_list[$key] = (object) $font_list[$key];
     }
@@ -445,7 +480,11 @@ class GFont {
 
     $oCss = new Sabberworm\CSS\CSSList\Document();
 
+    // Create different setup for different styles (Open Sans Bold Italic)
+
     foreach($this->font_list as $family) {
+      $dir = str_replace(' ', '', $family->family)."/";
+
       foreach($family->types as $version) {
 
         $oFontFace = new Sabberworm\CSS\RuleSet\AtRuleSet("font-face");
@@ -477,23 +516,23 @@ class GFont {
 
         } else {
 
-          // EOT IE9 compat mode
+          // EOT IE9 compat mode (fallback src)
           $format = 'eot';
 
-          $string = new Sabberworm\CSS\Value\CSSString('./font/'.$format.'/'.$this->nameFont($version->id).".".$format);
+          $string = new Sabberworm\CSS\Value\CSSString('./font/' . $dir . $this->nameFont($version->id).".".$format);
           $url = new Sabberworm\CSS\Value\URL($string);
           $src->setValue($url);
           $oFontFace->addRule($src);
 
-          // src multiple
+
+          // src multiple (real deal)
           $src_multiple = new Sabberworm\CSS\Rule\Rule("src");
           $src_value = new Sabberworm\CSS\Value\RuleValueList();
 
           $format_list = ['woff2', 'woff', 'ttf'];
 
-
           // Add EOT for IE 6-8
-          $oString = new Sabberworm\CSS\Value\CSSString('./font/'.$format.'/'.$this->nameFont($version->id).".".$format . "?#iefix");
+          $oString = new Sabberworm\CSS\Value\CSSString('./font/' . $dir . $this->nameFont($version->id).".".$format . "?#iefix");
           $oUrl = new Sabberworm\CSS\Value\URL($oString);
 
           $oFormat = new Sabberworm\CSS\Value\CSSFunction("format", $this->fontfaceFormat("eot"));
@@ -508,7 +547,7 @@ class GFont {
 
           // Modern browsers
           foreach($format_list as $format) {
-            $oString = new Sabberworm\CSS\Value\CSSString('./font/'.$format.'/'.$this->nameFont($version->id).".".$format);
+            $oString = new Sabberworm\CSS\Value\CSSString('./font/' . $dir . $this->nameFont($version->id).".".$format);
             $oUrl = new Sabberworm\CSS\Value\URL($oString);
 
             $oFormat = new Sabberworm\CSS\Value\CSSFunction("format", $this->fontfaceFormat($format));
@@ -530,12 +569,9 @@ class GFont {
 
       }
     }
-    // Set headers
-    //header("Content-Length: " . filesize($file));
 
     $oFormat = Sabberworm\CSS\OutputFormat::createPretty();
-    $css = $oCss->render($oFormat);
-    return "/*!\n * fontperf API (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n */\n".$css;
+    return $oCss->render($oFormat);
   }
 
 

@@ -4,10 +4,10 @@ use \Curl\Curl;
 function processURL($oURL) {
 	$ret = [];
 	$ret['file'] = trim(strval($oURL->getURL()), '"');
-  $ext = pathinfo($ret['file'], PATHINFO_EXTENSION);
+  $ret['ext'] = pathinfo($ret['file'], PATHINFO_EXTENSION);
 
   // If no extension, get from MIME type
-  if(empty($ext)) {
+  if(empty($ret['ext'])) {
     $curl = new Curl();
     $curl->get($ret['file']);
 

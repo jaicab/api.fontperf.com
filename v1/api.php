@@ -88,9 +88,7 @@ $app->get('/v1/gfonts/download/style[.{format}]', function($req, $res){
   }
   $myFonts->buildList();
 
-  echo "/*!\n * fontperf API v1.0 (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
-  echo " * \n * The fonts linked here are available as a ZIP package on /download and as separate files on /download/font.format.\n";
-  echo "*/\n";
+  echo cssComment("The fonts linked here are available as a ZIP package on /download and as separate files on /download/font.format.");
   echo strval($myFonts);
 
 	return $res->withHeader('Content-type', 'text/css');
@@ -109,10 +107,21 @@ $app->get('/v1/gfonts/datauri[.css]', function($req, $res){
   }
   $myFonts->buildList();
 
-  echo "/*!\n * fontperf API v1.0 (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
-  echo " * \n * DISCLAIMER: DO NOT LINK THIS CSS DIRECTLY. THIS API IS NOT MEANT FOR HOSTING AND ANY UPDATE COULD AFFECT YOUR CODEBASE.\n";
-  echo "*/\n";
-  echo $myFonts->buildCss('datauri');
+
+  $format = 'woff2';
+  if(isset($req->getQueryParams()['format'])) {
+    $format = $req->getQueryParams()['format'];
+  }
+
+  $css = $myFonts->buildCss('datauri', $format);
+
+  if($myFonts->error) {
+    var_dump($myFonts->errorMessage);
+    die();
+  }
+
+  echo cssComment(true);
+  echo $css;
 
 	return $res->withHeader('Content-type', 'text/css');
 });
@@ -131,10 +140,20 @@ $app->get('/v1/gfonts/critical[.css]', function($req, $res){
   }
   $myFonts->buildList();
 
-  echo "/*!\n * fontperf API v1.0 (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
-  echo " * \n * DISCLAIMER: DO NOT LINK THIS CSS DIRECTLY. THIS API IS NOT MEANT FOR HOSTING AND ANY UPDATE COULD AFFECT YOUR CODEBASE.\n";
-  echo "*/\n";
-  echo $myFonts->buildCss('datauri');
+  $format = 'woff2';
+  if(isset($req->getQueryParams()['format'])) {
+    $format = $req->getQueryParams()['format'];
+  }
+
+  $css = $myFonts->buildCss('datauri', $format);
+
+  if($myFonts->error) {
+    var_dump($myFonts->errorMessage);
+    die();
+  }
+
+  echo cssComment(true, ["Encoded fonts are in '".$format."' format."]);
+  echo $css;
 
   return $res->withHeader('Content-type', 'text/css');
 });
@@ -152,9 +171,7 @@ $app->get('/v1/gfonts/test[.css]', function($req, $res){
   }
   $myFonts->buildList();
 
-  echo "/*!\n * fontperf API v1.0 (https://fontperf.com/docs/)\n * Fonts provided by Google Fonts - https://www.google.com/fonts\n";
-  echo " * \n * DISCLAIMER: DO NOT LINK THIS CSS DIRECTLY. THIS API IS NOT MEANT FOR HOSTING AND ANY UPDATE COULD AFFECT YOUR CODEBASE.\n";
-  echo "*/\n";
+  echo cssComment(true);
   echo $myFonts->getCss();
 
 	return $res->withHeader('Content-type', 'text/css');

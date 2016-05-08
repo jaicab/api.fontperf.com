@@ -14,6 +14,12 @@ use Sabberworm\CSS\Parser as CSSParser;
 class GFont {
 
   const BASEURL = 'https://fonts.googleapis.com/css';
+  const USER_AGENTS = [
+    "woff2" => "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML like Gecko) Chrome/38.0.2125.104 Safari/537.36",
+    "woff" => "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko",
+    "ttf" => "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/534.54.16 (KHTML, like Gecko) Version/5.1.4 Safari/534.54.16",
+    "eot" => "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)"
+  ];
 
   private $family; // Family query string
   private $css; // Combined fetched CSS
@@ -222,30 +228,23 @@ class GFont {
     $ret = '';
     $this->breakDownFamily();
 
-    $userAgentList = [
-      "woff2" => "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML like Gecko) Chrome/38.0.2125.104 Safari/537.36",
-      "woff" => "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko",
-      "ttf" => "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/534.54.16 (KHTML, like Gecko) Version/5.1.4 Safari/534.54.16"
-    ];
-
     // If this is critical
+    $critical = null;
     if($this->critical_subset) {
-      $ua = $userAgentList['woff2'];
-      $this->css = $this->singleFetchCSS($this->family, $ua, $this->critical_subset);
-      return;
+      $critical = $this->critical_subset;
     }
 
+    $formats = ['woff2', 'woff', 'ttf'];
+
     // Modern browsers - Every format but EOT
-    foreach($userAgentList as $type => $ua) {
-      $fetchedCSS = $this->singleFetchCSS($this->family, $ua);
+    foreach($formats as $format) {
+      $fetchedCSS = $this->singleFetchCSS($this->family, self::USER_AGENTS[$format], $critical);
       $ret .= $fetchedCSS;
     }
 
     // IEs - EOT needs one request per style and weight
-    $ua = "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)";
-
     foreach($this->family_breakdown as $font) {
-      $fetchedCSS = $this->singleFetchCSS($font, $ua);
+      $fetchedCSS = $this->singleFetchCSS($font, self::USER_AGENTS['eot'], $critical);
       $ret .= $fetchedCSS;
     }
 
@@ -290,8 +289,6 @@ class GFont {
 
     // Make sure we got the format
     if(!is_string($format) || !isset($font->files->$format)) {
-      var_dump($font->files);
-      die();
       $this->setError("The requested format is not available or it hasn't been specified");
       return;
     }
@@ -476,7 +473,7 @@ class GFont {
    * @access public
    * @param string $type 'normal' for external font requests, 'datauri' for woff2 data-URIs.
    */
-  public function buildCSS($type = 'normal') {
+  public function buildCSS($type = 'normal', $format = 'woff2') {
 
     $oCss = new Sabberworm\CSS\CSSList\Document();
 
@@ -508,8 +505,12 @@ class GFont {
         $src = new Sabberworm\CSS\Rule\Rule("src");
 
         if($type == "datauri") {
+          if(!isset($version->files->$format)) {
+            $this->setError("The requested format '".$format."' is not available.");
+            return;
+          }
 
-          $string = new Sabberworm\CSS\Value\CSSString($this->datauri($version->files->woff2, "woff2"));
+          $string = new Sabberworm\CSS\Value\CSSString($this->datauri($version->files->$format, $format));
           $url = new Sabberworm\CSS\Value\URL($string);
           $src->setValue($url);
           $oFontFace->addRule($src);

@@ -11,6 +11,44 @@ $app->get('/', function($req, $res){
 
 
 
+// Breaks down what the API will have available
+$app->get('/v1/gfonts[.json]', function($req, $res){
+
+  $myFonts = new GFont($req->getQueryParams()['family']);
+
+  if($myFonts->error) {
+    var_dump($myFonts->errorMessage);
+    die();
+  }
+  $myFonts->buildList();
+
+  // TODO: Before returning the list, we should tell what endpoints are available (if all formats are requested for each style support, critical stuff, etc).
+
+  echo json_encode($myFonts->getList());
+    return $res->withHeader('Content-type', 'application/json');
+});
+
+
+
+// Collects CSS for multiple requests to GF servers
+$app->get('/v1/gfonts/test[.css]', function($req, $res){
+
+  $myFonts = new GFont($req->getQueryParams()['family']);
+
+  if($myFonts->error) {
+    var_dump($myFonts->errorMessage);
+    die();
+  }
+  $myFonts->buildList();
+
+  echo cssComment(true);
+  echo $myFonts->getCss();
+
+  return $res->withHeader('Content-type', 'text/css');
+});
+
+
+
 // Downloads a ZIP containing the fonts and the CSS file for self-hosting
 $app->get('/v1/gfonts/download', function($req, $res){
 
@@ -171,39 +209,4 @@ $app->get('/v1/gfonts/critical[.css]', function($req, $res){
   return $res->withHeader('Content-type', 'text/css');
 });
 
-
-
-// Collects CSS for multiple requests to GF servers
-$app->get('/v1/gfonts/test[.css]', function($req, $res){
-
-	$myFonts = new GFont($req->getQueryParams()['family']);
-
-  if($myFonts->error) {
-    var_dump($myFonts->errorMessage);
-    die();
-  }
-  $myFonts->buildList();
-
-  echo cssComment(true);
-  echo $myFonts->getCss();
-
-	return $res->withHeader('Content-type', 'text/css');
-});
-
-
-
-// Breaks down what the API will have available
-$app->get('/v1/gfonts[.json]', function($req, $res){
-
-  $myFonts = new GFont($req->getQueryParams()['family']);
-
-  if($myFonts->error) {
-    var_dump($myFonts->errorMessage);
-    die();
-  }
-  $myFonts->buildList();
-
-	echo json_encode($myFonts->getList());
-    return $res->withHeader('Content-type', 'application/json');
-});
 

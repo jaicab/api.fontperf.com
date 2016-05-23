@@ -16,7 +16,7 @@ class GFont {
   const BASEURL = 'https://fonts.googleapis.com/css';
   const SUPPORTED_FORMATS = ['woff2', 'woff', 'ttf', 'eot'];
   const USER_AGENTS = [
-    "woff2" => "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML like Gecko) Chrome/38.0.2125.104 Safari/537.36",
+    "woff2" => "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1",
     "woff" => "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko",
     "ttf" => "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/534.54.16 (KHTML, like Gecko) Version/5.1.4 Safari/534.54.16",
     "eot" => "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)",
@@ -284,7 +284,7 @@ class GFont {
       $critical = $this->critical_subset;
     }
 
-    $formats = array_diff(self::SUPPORTED_FORMATS, ['eot']);
+    $formats = array_diff(self::SUPPORTED_FORMATS, ['eot', 'svg']);
 
     // Modern browsers - Every format but EOT and SVG
     foreach($formats as $format) {
@@ -520,22 +520,22 @@ class GFont {
 
         $oFontFace = new Sabberworm\CSS\RuleSet\AtRuleSet("font-face");
 
-        // font-family
+        // font-family: "Open Sans";
         $name = new Sabberworm\CSS\Rule\Rule("font-family");
         $name->setValue('"'. $family->family .'"');
         $oFontFace->addRule($name);
 
-        // font-weight
+        // font-weight: 400;
         $weight = new Sabberworm\CSS\Rule\Rule("font-weight");
         $weight->setValue($version->weight);
         $oFontFace->addRule($weight);
 
-        // font-style
+        // font-style: normal;
         $style = new Sabberworm\CSS\Rule\Rule("font-style");
         $style->setValue($version->style);
         $oFontFace->addRule($style);
 
-        // src
+        // src:
         $src = new Sabberworm\CSS\Rule\Rule("src");
 
         if($type == "datauri") {
@@ -544,6 +544,7 @@ class GFont {
             return;
           }
 
+          // src: url(data-bas64)
           $string = new Sabberworm\CSS\Value\CSSString($this->datauri($version->files->$format, $format));
           $url = new Sabberworm\CSS\Value\URL($string);
           $src->setValue($url);

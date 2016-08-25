@@ -535,6 +535,11 @@ class GFont {
         $style->setValue($version->style);
         $oFontFace->addRule($style);
 
+        // Font loading logic via CSS! - font-display: swap;
+        $style = new Sabberworm\CSS\Rule\Rule("font-display");
+        $style->setValue("swap");
+        $oFontFace->addRule($style);
+
         // src:
         $src = new Sabberworm\CSS\Rule\Rule("src");
 
